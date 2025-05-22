@@ -27,7 +27,6 @@ export async function uploadImage(
   }
 
   const contentType = request.headers.get('content-type');
-  context.log(`Content type: ${contentType}`);
 
   if (!contentType?.includes('multipart/form-data')) {
     return {
@@ -41,6 +40,8 @@ export async function uploadImage(
 
   const formData = await request.formData();
   const file = formData.get('file');
+  const category = formData.get('category');
+  const tags = formData.get('tags');
 
   if (!file || !(file instanceof File)) {
     return {
@@ -51,7 +52,6 @@ export async function uploadImage(
 
   const id = uuidv4();
   const blobName = `${id}_${file.name}`;
-  context.log(`Blob name: ${blobName}`);
   const mimeType = file.type;
   const arrayBuffer = await file.arrayBuffer();
 
@@ -70,6 +70,8 @@ export async function uploadImage(
     metadata: {
       id,
       mimeType,
+      category: category ? category.toString() : '',
+      tags: JSON.stringify(tags),
     },
   });
 
@@ -77,7 +79,7 @@ export async function uploadImage(
     status: 200,
     jsonBody: {
       message: 'file uploaded successfully',
-      type: file.type,
+      name: blobName,
       size: file.size,
       id,
     },

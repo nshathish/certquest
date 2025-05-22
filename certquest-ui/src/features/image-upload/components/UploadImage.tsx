@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowUp, Loader2, UploadCloud, X } from 'lucide-react';
+import { ArrowUp, Loader2, UploadCloud, X } from 'lucide-react';
+import { toast } from 'sonner';
 
-import TagInput from './TagInput.tsx';
-import Category from './Category.tsx';
+import TagInput from '@app/features/image-upload/components/TagInput.tsx';
+import Category from '@app/features/image-upload/components/Category.tsx';
 
-import { useImageInput } from '../hooks/useImageInput.ts';
-import { useImageUpload } from '../hooks/useImageUpload.ts';
+import { useImageInput } from '@app/features/image-upload/hooks/useImageInput.ts';
+import { useImageUpload } from '@app/features/image-upload/hooks/useImageUpload.ts';
 
 export default function UploadImage() {
   const [tags, setTags] = useState<string[]>([]);
@@ -20,14 +21,8 @@ export default function UploadImage() {
     clearPreview,
   } = useImageInput();
 
-  const {
-    uploadImage,
-    uploadImageReset,
-    isPending,
-    isError,
-    isSuccess,
-    error,
-  } = useImageUpload();
+  const { uploadImageAsync, uploadImageReset, isPending, isSuccess } =
+    useImageUpload();
 
   useEffect(() => {
     if (selectedFile) {
@@ -37,16 +32,30 @@ export default function UploadImage() {
     }
   }, [selectedFile, uploadImageReset]);
 
-  const handleFileUpload = () => {
-    if (selectedFile) {
-      uploadImage(
-        {
-          file: selectedFile,
-          tags,
-          category,
-        },
-        { onSuccess: () => clearPreview() },
-      );
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
+
+    if (!category.trim()) {
+      toast.warning('Please select a category');
+      return;
+    }
+
+    if (tags.length === 0) {
+      toast.warning('Please enter at least one tag');
+      return;
+    }
+
+    try {
+      await uploadImageAsync({
+        file: selectedFile,
+        tags,
+        category,
+      });
+      toast.success('Image uploaded successfully');
+      clearPreview();
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      toast.error('Image upload failed');
     }
   };
 
@@ -114,18 +123,6 @@ export default function UploadImage() {
             </button>
           )}
         </div>
-
-        {isSuccess && (
-          <p className="mt-4 flex items-center text-green-600 text-base justify-center">
-            <UploadCloud className="w-5 h-5 mr-2" /> Uploaded Successfully
-          </p>
-        )}
-        {isError && (
-          <p className="mt-4 flex items-center text-red-600 text-base justify-center">
-            <AlertTriangle className="w-5 h-5 mr-2" />{' '}
-            {(error as Error).message}
-          </p>
-        )}
       </div>
     </div>
   );

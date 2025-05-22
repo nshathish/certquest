@@ -27,6 +27,7 @@ export function useImageUpload() {
   return {
     ...mutation,
     uploadImage: mutation.mutate,
+    uploadImageAsync: mutation.mutateAsync,
     uploadImageReset: mutation.reset,
   };
 }
